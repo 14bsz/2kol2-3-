@@ -1,0 +1,6 @@
+{
+  "name": "NBA2KOL2 合卡盈亏记录器 & 理智安全卫士",
+  "description": "专为 NBA 2K Online 2 玩家量身定制的高级合卡数据分析、资产记账与心智理智护航工具，内置合卡消耗规则、理智自救熔断与历史盈亏追踪曲线。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

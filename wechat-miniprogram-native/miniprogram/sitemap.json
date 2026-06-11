@@ -1,0 +1,9 @@
+{
+  "desc": "NBA2KOL2 合卡理智卫士站点地图",
+  "rules": [
+    {
+      "action": "allow",
+      "page": "*"
+    }
+  ]
+}

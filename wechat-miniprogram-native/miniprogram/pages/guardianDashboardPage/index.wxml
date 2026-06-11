@@ -1,0 +1,622 @@
+<view class="page-root {{theme === 'dark' ? 'theme-dark' : 'theme-light'}}">
+  <view class="page-shell">
+    <view
+      class="custom-header"
+      style="height: {{headerHeight}}px; padding-top: {{headerPaddingTop}}px; padding-right: {{headerRightSafe}}px;"
+    >
+      <view class="custom-header-bar" style="height: {{headerBarHeight}}px;">
+        <view class="header-title-wrap">
+          <view class="header-dot"></view>
+          <text class="header-title">NBA2KOL2 合卡理智卫士</text>
+        </view>
+        <view class="header-actions">
+          <button class="sound-button" hover-class="ghost-button-hover" hover-stay-time="120" bindtap="handleToggleSound">
+          <image class="icon-24" src="{{soundEnabled ? icons.volume2 : icons.volumeX}}" mode="aspectFit"></image>
+          <text class="sound-button-text {{soundEnabled ? 'sound-button-text-active' : ''}}">{{soundEnabled ? '音效开' : '静音中'}}</text>
+          </button>
+        </view>
+      </view>
+    </view>
+
+    <view class="content-shell">
+      <scroll-view wx:if="{{currentTab === 'console'}}" class="content-scroll" scroll-y enhanced show-scrollbar="{{false}}">
+        <view class="content-inner safe-bottom">
+          <view class="card panel-card">
+            <view class="panel-glow"></view>
+            <view class="panel-header">
+              <view class="panel-title-wrap">
+                <image class="icon-28" src="{{icons.coins}}" mode="aspectFit"></image>
+                <text class="panel-title">卡量账簿配置</text>
+              </view>
+              <text class="panel-meta">标准单卡：1突破</text>
+            </view>
+
+            <view class="asset-box">
+              <view class="asset-col">
+                <text class="field-label">初始持卡 (1标准底卡)</text>
+                <input
+                  class="asset-input"
+                  type="number"
+                  value="{{initialCardsInput}}"
+                  bindinput="handleInitialCardsInput"
+                  bindblur="handleInitialCardsCommit"
+                  confirm-type="done"
+                />
+              </view>
+              <view class="asset-divider"></view>
+              <view class="asset-col asset-col-right">
+                <text class="field-label">当前计算余额</text>
+                <text class="asset-value">{{currentCards}} 张</text>
+                <text
+                  class="asset-delta {{reportStats.netCumulative > 0 ? 'asset-delta-gain' : reportStats.netCumulative < 0 ? 'asset-delta-loss' : 'asset-delta-flat'}}"
+                >
+                  {{reportStats.netCumulative > 0 ? '已赚 ' + reportStats.netCumulative + ' 张' : reportStats.netCumulative < 0 ? '已亏 ' + (0 - reportStats.netCumulative) + ' 张' : '当前持平'}}
+                </text>
+              </view>
+            </view>
+          </view>
+
+          <view class="selector-grid">
+            <view class="card selector-card">
+              <view class="selector-label">
+                <image class="icon-24" src="{{icons.target}}" mode="aspectFit"></image>
+                <text>目标主卡星级</text>
+              </view>
+              <view class="star-tabs">
+                <block wx:for="{{starOptions}}" wx:key="value">
+                  <button
+                    class="star-tab {{activeStarTab === item ? 'star-tab-active' : ''}}"
+                    hover-class="star-tab-hover"
+                    hover-stay-time="120"
+                    data-star="{{item}}"
+                    bindtap="handleStarTabTap"
+                  >
+                    {{item}}
+                  </button>
+                </block>
+              </view>
+            </view>
+
+            <view class="card selector-card">
+              <view class="selector-label">
+                <text>副卡消耗配方</text>
+              </view>
+              <picker mode="selector" range="{{currentRules}}" range-key="formulaName" value="{{currentRulePickerIndex}}" bindchange="handleRulePickerChange">
+                <view class="picker-box">
+                  <text class="picker-text">{{selectedRule.formulaName}}</text>
+                  <image class="icon-22" src="{{icons.arrowRightLeft}}" mode="aspectFit"></image>
+                </view>
+              </picker>
+            </view>
+          </view>
+
+          <view class="card panel-card expect-card-shell">
+            <view class="expect-header">
+              <view class="expect-header-main">
+                <view class="expect-rate-row">
+                  <text class="expect-label">成功概率</text>
+                  <view class="expect-number-wrap">
+                    <text class="expect-number-big">{{selectedRule.successRate}}</text>
+                    <text class="expect-number-unit">%</text>
+                  </view>
+                </view>
+                <view class="expect-tag expect-tag-{{expectationTone}}">
+                  <image class="icon-20" src="{{icons.sparkles}}" mode="aspectFit"></image>
+                  <text class="expect-tag-text">{{expectationBadgeText}}</text>
+                </view>
+              </view>
+            </view>
+
+            <view class="forecast-grid">
+              <view class="forecast-item forecast-item-success">
+                <text class="forecast-label">成功：</text>
+                <text class="forecast-value">赚 +{{selectedRule.successGain}} 张</text>
+              </view>
+              <view class="forecast-item forecast-item-fail">
+                <text class="forecast-label">失败：</text>
+                <text class="forecast-value">亏 -{{selectedRule.failLoss}} 张</text>
+              </view>
+            </view>
+            <view class="expect-note">
+              <text class="expect-note-value">数学期望 {{expectationValueText}}</text>
+              <text class="expect-note-text">{{expectationHintText}}</text>
+            </view>
+          </view>
+
+          <view class="action-grid">
+            <button class="action-button action-button-success" hover-class="action-button-hover" hover-stay-time="120" data-success="true" bindtap="handleLogUpgrade">成功</button>
+            <button class="action-button action-button-fail" hover-class="action-button-hover" hover-stay-time="120" data-success="false" bindtap="handleLogUpgrade">失败</button>
+          </view>
+
+          <view class="card accordion-card">
+            <button class="accordion-header" hover-class="accordion-header-hover" hover-stay-time="150" bindtap="handleToggleExclusivePanel">
+              <view class="accordion-title-wrap">
+                <image class="icon-24" src="{{icons.percent}}" mode="aspectFit"></image>
+                <text class="accordion-title">24% & 48% 专属胜率观测台</text>
+                <text class="accordion-tag">分类统计</text>
+              </view>
+              <view class="accordion-state-wrap">
+                <text class="accordion-state">{{isExclusivePanelExpanded ? '收起' : '展开'}}</text>
+                <image class="icon-20" src="{{isExclusivePanelExpanded ? icons.chevronUp : icons.chevronDown}}" mode="aspectFit"></image>
+              </view>
+            </button>
+
+            <view wx:if="{{isExclusivePanelExpanded}}" class="accordion-body">
+              <view class="mini-stat-grid">
+                <!-- 24% 卡片 -->
+                <view class="mini-stat-card">
+                  <view class="mini-stat-head">
+                    <text class="mini-stat-title mini-stat-title-green">24% 概率档位</text>
+                    <view class="mini-stat-badge-wrap {{exclusive24.total > 0 ? 'mini-stat-badge-wrap-green' : ''}}">
+                      <text class="mini-stat-badge-text {{exclusive24.total > 0 ? 'mini-stat-badge-text-green' : ''}}">{{exclusive24.total > 0 ? '实测: ' + exclusive24.actualRateText : '实测: --'}}</text>
+                    </view>
+                  </view>
+                  <view class="mini-stat-divider"></view>
+                  <view class="mini-stat-line">
+                    <text class="mini-stat-line-label">样本记录</text>
+                    <text class="mini-stat-line-value">{{exclusive24.total}} 次</text>
+                  </view>
+                  <view class="mini-stat-line">
+                    <text class="mini-stat-line-label">成 / 败 占比</text>
+                    <view class="mini-stat-ratio">
+                      <text class="text-green mini-stat-ratio-num">{{exclusive24.wins}}✓</text>
+                      <text class="mini-stat-ratio-sep">/</text>
+                      <text class="text-red mini-stat-ratio-num">{{exclusive24.losses}}✗</text>
+                    </view>
+                  </view>
+                  <view class="mini-stat-line mini-stat-line-strong">
+                    <text class="mini-stat-line-label">累计损益</text>
+                    <text class="mini-stat-line-value {{exclusive24.netCards > 0 ? 'text-green' : exclusive24.netCards < 0 ? 'text-red' : 'mini-stat-neutral'}}">{{exclusive24.netCardsText}} 张</text>
+                  </view>
+                </view>
+                <!-- 48% 卡片 -->
+                <view class="mini-stat-card">
+                  <view class="mini-stat-head">
+                    <text class="mini-stat-title mini-stat-title-indigo">48% 概率档位</text>
+                    <view class="mini-stat-badge-wrap {{exclusive48.total > 0 ? 'mini-stat-badge-wrap-indigo' : ''}}">
+                      <text class="mini-stat-badge-text {{exclusive48.total > 0 ? 'mini-stat-badge-text-indigo' : ''}}">{{exclusive48.total > 0 ? '实测: ' + exclusive48.actualRateText : '实测: --'}}</text>
+                    </view>
+                  </view>
+                  <view class="mini-stat-divider"></view>
+                  <view class="mini-stat-line">
+                    <text class="mini-stat-line-label">样本记录</text>
+                    <text class="mini-stat-line-value">{{exclusive48.total}} 次</text>
+                  </view>
+                  <view class="mini-stat-line">
+                    <text class="mini-stat-line-label">成 / 败 占比</text>
+                    <view class="mini-stat-ratio">
+                      <text class="text-green mini-stat-ratio-num">{{exclusive48.wins}}✓</text>
+                      <text class="mini-stat-ratio-sep">/</text>
+                      <text class="text-red mini-stat-ratio-num">{{exclusive48.losses}}✗</text>
+                    </view>
+                  </view>
+                  <view class="mini-stat-line mini-stat-line-strong">
+                    <text class="mini-stat-line-label">累计损益</text>
+                    <text class="mini-stat-line-value {{exclusive48.netCards > 0 ? 'text-green' : exclusive48.netCards < 0 ? 'text-red' : 'mini-stat-neutral'}}">{{exclusive48.netCardsText}} 张</text>
+                  </view>
+                </view>
+              </view>
+
+              <view class="split-title">
+                <image class="icon-24" src="{{icons.history}}" mode="aspectFit"></image>
+                <text>24% 与 48% 核心合并记录</text>
+              </view>
+
+              <view class="history-columns">
+                <view class="history-column">
+                  <text class="history-title history-title-green">24% 档位专属历史 ({{records24.length}} 次)</text>
+                  <scroll-view class="history-scroll" scroll-y enhanced show-scrollbar="{{false}}">
+                    <view class="history-box">
+                      <view wx:if="{{records24.length === 0}}" class="history-empty">暂无 24% 的合卡强化记录。</view>
+                      <block wx:for="{{records24}}" wx:key="id">
+                        <view class="history-row">
+                          <view class="history-main">
+                            <text class="history-main-title">{{item.targetStar}}突 ({{item.formulaName}})</text>
+                            <text class="history-time">{{item.timeLabel}}</text>
+                          </view>
+                          <view class="history-side">
+                            <text class="history-status {{item.success ? 'history-status-success' : 'history-status-fail'}}">{{item.statusText}}</text>
+                            <text class="history-delta {{item.success ? 'text-green' : 'text-red'}}">{{item.netChangeText}}</text>
+                          </view>
+                        </view>
+                      </block>
+                    </view>
+                  </scroll-view>
+                </view>
+
+                <view class="history-column">
+                  <text class="history-title history-title-indigo">48% 档位专属历史 ({{records48.length}} 次)</text>
+                  <scroll-view class="history-scroll" scroll-y enhanced show-scrollbar="{{false}}">
+                    <view class="history-box">
+                      <view wx:if="{{records48.length === 0}}" class="history-empty">暂无 48% 的合卡强化记录。</view>
+                      <block wx:for="{{records48}}" wx:key="id">
+                        <view class="history-row">
+                          <view class="history-main">
+                            <text class="history-main-title">{{item.targetStar}}突 ({{item.formulaName}})</text>
+                            <text class="history-time">{{item.timeLabel}}</text>
+                          </view>
+                          <view class="history-side">
+                            <text class="history-status {{item.success ? 'history-status-success' : 'history-status-fail'}}">{{item.statusText}}</text>
+                            <text class="history-delta {{item.success ? 'text-green' : 'text-red'}}">{{item.netChangeText}}</text>
+                          </view>
+                        </view>
+                      </block>
+                    </view>
+                  </scroll-view>
+                </view>
+              </view>
+            </view>
+          </view>
+
+          <view class="card panel-card">
+            <view class="row-between">
+              <view class="panel-title-wrap">
+                <image class="icon-28" src="{{icons.trendingDown}}" mode="aspectFit"></image>
+                <text class="panel-title">直观胜率分布走势 (挂载垫子观察)</text>
+              </view>
+              <button class="ghost-button strategy-help-button" hover-class="ghost-button-hover" hover-stay-time="120" bindtap="handleToggleStrategyHelp">
+                <text>合卡怪招</text>
+                <image class="icon-20" src="{{icons.helpCircle}}" mode="aspectFit"></image>
+              </button>
+            </view>
+
+            <view class="trend-panel-shell">
+              <view class="trend-label-column">
+                <view class="trend-row-label trend-row-label-success">✓ 成</view>
+                <view class="trend-row-label trend-row-label-fail">✗ 败</view>
+              </view>
+              <scroll-view class="trend-scroll trend-scroll-linked" scroll-x enhanced show-scrollbar="{{false}}">
+                <view class="trend-stack">
+                  <view class="trend-row">
+                    <block wx:for="{{gridSlots}}" wx:key="id">
+                      <view
+                        class="trend-slot {{item.isFilled ? (item.success ? 'trend-slot-success' : 'trend-slot-empty') : 'trend-slot-placeholder'}}"
+                        hover-class="trend-slot-hover"
+                        hover-stay-time="100"
+                        data-title="{{item.detailTitle}}"
+                        data-detail="{{item.detailText}}"
+                        data-filled="{{item.isFilled}}"
+                        bindtap="handleTrendSlotTap"
+                      >
+                        <text>{{item.isFilled && item.success ? item.symbol + item.targetStarLabel : '•'}}</text>
+                      </view>
+                    </block>
+                  </view>
+                  <view class="trend-row">
+                    <block wx:for="{{gridSlots}}" wx:key="id">
+                      <view
+                        class="trend-slot {{item.isFilled ? (!item.success ? 'trend-slot-fail' : 'trend-slot-empty') : 'trend-slot-placeholder'}}"
+                        hover-class="trend-slot-hover"
+                        hover-stay-time="100"
+                        data-title="{{item.detailTitle}}"
+                        data-detail="{{item.detailText}}"
+                        data-filled="{{item.isFilled}}"
+                        bindtap="handleTrendSlotTap"
+                      >
+                        <text>{{item.isFilled && !item.success ? item.symbol + item.targetStarLabel : '•'}}</text>
+                      </view>
+                    </block>
+                  </view>
+                </view>
+              </scroll-view>
+            </view>
+
+          </view>
+
+          <view class="bottom-row">
+            <text class="bottom-row-text">已记录历史: <text class="bottom-row-strong">{{recordsCount}}</text> 次</text>
+            <button class="reset-entry" hover-class="reset-entry-hover" hover-stay-time="120" bindtap="handleOpenResetDialog">
+              <image class="icon-22" src="{{icons.refreshCw}}" mode="aspectFit"></image>
+              <text>清空账簿并重新开始</text>
+            </button>
+          </view>
+        </view>
+      </scroll-view>
+
+      <scroll-view wx:elif="{{currentTab === 'report'}}" class="content-scroll" scroll-y enhanced show-scrollbar="{{false}}">
+          <view class="content-inner safe-bottom">
+          <view class="card report-curve-card">
+            <view class="panel-glow"></view>
+            <view class="report-curve-head">
+              <view class="report-curve-title-wrap">
+                <image class="icon-28" src="{{icons.activity}}" mode="aspectFit"></image>
+                <text class="report-curve-title">本场资本回撤&波动趋势 (Wealth Curve)</text>
+              </view>
+              <text class="report-curve-meta">初始 {{initialCards}}张 → 当前 {{currentCards}}张</text>
+            </view>
+
+            <view class="report-chart-frame">
+              <canvas class="report-trend-canvas" canvas-id="guardianTrendCanvas" style="width: 100%; height: 150rpx;"></canvas>
+              <view class="report-chart-meta-row">
+                <text>底卡波谷: {{wealthMin}} 张</text>
+                <text>资产峰会: {{wealthMax}} 张</text>
+              </view>
+            </view>
+          </view>
+
+          <view class="report-stat-grid">
+            <view class="card report-stat-card">
+              <view class="report-stat-head">
+                <image class="icon-24" src="{{icons.scale}}" mode="aspectFit"></image>
+                <text>实测胜率 vs 官方胜率</text>
+              </view>
+              <view class="report-stat-main">
+                <text class="report-stat-number {{reportStats.actualRate >= reportStats.expectedRateAvg ? 'text-green' : 'report-stat-number-muted'}}">{{reportStats.actualRateText}}</text>
+                <text class="report-stat-sub">/ {{reportStats.expectedRateText}}</text>
+              </view>
+              <text class="report-stat-diff">偏离值: {{reportStats.rateGapText}}</text>
+              <view class="report-stat-badge">
+                <text>气运评定: </text>
+                <text class="text-amber report-stat-badge-highlight">{{reportStats.luckMeter}}</text>
+              </view>
+            </view>
+
+            <view class="card report-stat-card">
+              <view class="report-stat-head">
+                <image class="icon-24" src="{{icons.flame}}" mode="aspectFit"></image>
+                <text>本轮合卡战绩纪录</text>
+              </view>
+              <view class="report-streak-grid">
+                <view class="report-streak-mini">
+                  <text class="report-streak-mini-label">最高连红</text>
+                  <text class="text-green report-streak-mini-value">{{reportStats.maxWinStreak}} 连</text>
+                </view>
+                <view class="report-streak-mini">
+                  <text class="report-streak-mini-label">最高连黑</text>
+                  <text class="text-red report-streak-mini-value">{{reportStats.maxLossStreak}} 连</text>
+                </view>
+              </view>
+              <view class="report-streak-banner {{reportStats.currentStreakType === 'win' ? 'report-streak-banner-win' : reportStats.currentStreakType === 'loss' ? 'report-streak-banner-loss' : ''}}">
+                <text>{{reportStats.currentStreakText}}</text>
+              </view>
+            </view>
+          </view>
+
+          <view class="card report-card">
+            <view class="report-card-head">
+              <view class="report-badge-tag">
+                <image class="icon-24" src="{{icons.bookOpen}}" mode="aspectFit"></image>
+                <text>操盘诊断白皮书</text>
+              </view>
+              <!-- 生成报告图功能已隐藏 -->
+              <!--
+              <button class="report-download-button {{reportGenerated ? 'report-download-button-success' : ''}}" hover-class="ghost-button-hover" hover-stay-time="120" bindtap="handleGenerateReport">
+                <image class="icon-20" src="{{icons.download}}" mode="aspectFit"></image>
+                <text>{{reportGenerated ? '生成成功' : '生成报告图'}}</text>
+              </button>
+              -->
+            </view>
+
+            <view class="report-sheet">
+              <view class="report-sheet-line">
+                <view class="report-sheet-label-wrap">
+                  <image class="icon-20" src="{{icons.activity}}" mode="aspectFit"></image>
+                  <text>当前资本余额</text>
+                </view>
+                <view class="report-sheet-value-wrap">
+                  <text class="report-sheet-value-strong">{{currentCards}} 张</text>
+                  <text class="{{reportStats.netCumulative >= 0 ? 'text-green' : 'text-red'}}">({{reportStats.netCumulativeText}})</text>
+                </view>
+              </view>
+              <view class="report-sheet-line report-sheet-line-alt">
+                <view class="report-sheet-label-wrap">
+                  <image class="icon-20" src="{{icons.scale}}" mode="aspectFit"></image>
+                  <text>整体偏离实测胜率</text>
+                </view>
+                <view class="report-sheet-rate-wrap">
+                  <text class="text-green report-sheet-rate-main">{{reportStats.actualRateText}}</text>
+                  <text class="report-sheet-rate-sub">官方期望{{reportStats.expectedRateText}}</text>
+                </view>
+              </view>
+              <view class="report-sheet-line">
+                <view class="report-sheet-label-wrap">
+                  <image class="icon-20" src="{{icons.flame}}" mode="aspectFit"></image>
+                  <text>波谷回撤警戒监控</text>
+                </view>
+                <view class="report-sheet-drawdown-wrap">
+                  <text class="{{sanityMetrics.maxDrawdownPercent >= drawDownLimitPercent ? 'text-red report-sheet-drawdown-alert' : 'report-sheet-drawdown-normal'}}">{{sanityMetrics.maxDrawdownPercent.toFixed(1)}}%</text>
+                  <text class="report-sheet-rate-sub">阈值 {{drawDownLimitPercent}}%</text>
+                </view>
+              </view>
+              <view class="report-sheet-line report-sheet-line-alt report-sheet-line-compact">
+                <text class="report-sheet-compact-label">极端峰值连转</text>
+                <view class="report-sheet-streak-wrap">
+                  <text class="text-green">最高连红<text class="report-sheet-streak-count">{{reportStats.maxWinStreak}}</text>发</text>
+                  <text class="report-sheet-divider">|</text>
+                  <text class="text-red">最高连黑<text class="report-sheet-streak-count">{{reportStats.maxLossStreak}}</text>发</text>
+                </view>
+              </view>
+              <view class="report-advice">
+                <view class="report-advice-title">
+                  <image class="icon-20" src="{{icons.shieldAlert}}" mode="aspectFit"></image>
+                  <text>理智系统鉴定意见 ({{reportStats.luckMeter}})</text>
+                </view>
+                <text class="report-advice-text">{{sanityMetrics.advice}}</text>
+              </view>
+            </view>
+
+            <view class="diagnosis-card">
+              <image class="icon-24" src="{{icons.compass}}" mode="aspectFit"></image>
+              <view class="diagnosis-body">
+                <text class="diagnosis-title">{{cognitiveDiagnosis.biasName}}</text>
+                <text class="diagnosis-text">{{cognitiveDiagnosis.biasDes}}</text>
+              </view>
+            </view>
+
+            <view class="row-between report-bottom-row">
+              <text class="panel-meta">理智指数得分: {{sanityMetrics.score}}/100</text>
+              <button class="rescue-button" hover-class="ghost-button-hover" hover-stay-time="120" bindtap="handleManualBreathing">
+                <image class="icon-22" src="{{icons.heart}}" mode="aspectFit"></image>
+                <text>深呼吸物理自救 (3s)</text>
+              </button>
+            </view>
+          </view>
+
+          <view class="card report-slider-card">
+            <view class="report-slider-head">
+              <view class="report-slider-label">
+                <image class="icon-28" src="{{icons.shieldAlert}}" mode="aspectFit"></image>
+                <text class="report-slider-title">理智回撤硬防御警戒线 (%)</text>
+              </view>
+              <text class="report-slider-value">{{drawDownLimitPercent}}% 跌幅</text>
+            </view>
+            <text class="report-slider-tip">行为心理止损设防：当底卡波动幅度回撤超过此红线时，主面板将强制封印合卡3秒，自动拦截暴走。</text>
+            <view class="report-slider-box">
+              <text class="report-slider-edge">10%</text>
+              <slider class="slider-core" min="10" max="80" step="5" value="{{drawDownLimitPercent}}" activeColor="#10b981" backgroundColor="{{theme === 'dark' ? '#1f2937' : '#e5e7eb'}}" bindchange="handleDrawDownLimitChange"></slider>
+              <text class="report-slider-edge">80%</text>
+            </view>
+          </view>
+
+          <view class="card accordion-card ledger-accordion-card">
+            <button class="accordion-header" hover-class="accordion-header-hover" hover-stay-time="150" bindtap="handleToggleLedger">
+              <view class="accordion-title-wrap">
+                <image class="icon-24" src="{{icons.bookOpen}}" mode="aspectFit"></image>
+                <text class="accordion-title">全息账目明细流水及防错回滚</text>
+                <text class="accordion-tag">{{recordList.length}} 条</text>
+              </view>
+              <view class="accordion-state-wrap">
+                <text class="accordion-state">{{isLedgerExpanded ? '收起' : '展开'}}</text>
+                <image class="icon-20" src="{{isLedgerExpanded ? icons.chevronUp : icons.chevronDown}}" mode="aspectFit"></image>
+              </view>
+            </button>
+
+            <view wx:if="{{isLedgerExpanded}}" class="accordion-body ledger-accordion-body">
+              <view wx:if="{{recordList.length === 0}}" class="ledger-empty">
+                <text>暂无合卡流水。在主控台登记的每一发升星或爆卡数据将完整呈现在此处。</text>
+              </view>
+
+              <view wx:else class="report-ledger-list">
+                <block wx:for="{{recordList}}" wx:key="id">
+                  <view class="report-ledger-card">
+                    <view class="ledger-stripe {{item.success ? 'ledger-stripe-green' : 'ledger-stripe-red'}}"></view>
+                    <view class="report-ledger-main">
+                      <view class="report-ledger-title-row">
+                        <text class="report-ledger-title">{{item.title}}</text>
+                        <text class="report-ledger-formula">{{item.formulaName}}</text>
+                      </view>
+                      <text class="report-ledger-time">{{item.timeLabel}} · 官方几率 {{item.successRate}}%</text>
+                    </view>
+                    <view class="report-ledger-side">
+                      <view class="report-ledger-side-metrics">
+                        <text class="report-ledger-delta {{item.success ? 'text-green' : 'text-red'}}">{{item.netChangeText}} 张</text>
+                        <text class="report-ledger-score">得分: {{item.sanityText}}</text>
+                      </view>
+                      <button class="report-ledger-delete" hover-class="ledger-delete-hover" hover-stay-time="120" data-id="{{item.id}}" bindtap="handleDeleteRecord">
+                        <image class="icon-28" src="{{icons.trash2}}" mode="aspectFit"></image>
+                      </button>
+                    </view>
+                  </view>
+                </block>
+              </view>
+            </view>
+          </view>
+        </view>
+      </scroll-view>
+    </view>
+
+    <view class="footer-bar">
+      <button class="footer-button {{currentTab === 'console' ? 'footer-button-active' : ''}}" hover-class="footer-button-hover" hover-stay-time="150" data-tab="console" bindtap="handleSwitchTab">
+        <image class="icon-44" src="{{icons.target}}" mode="aspectFit"></image>
+        <text>合卡控台</text>
+      </button>
+
+      <button class="footer-button footer-button-center {{theme === 'dark' ? 'footer-button-theme-dark' : 'footer-button-theme-light'}}" hover-class="footer-button-hover" hover-stay-time="150" bindtap="handleToggleTheme">
+        <image class="icon-44" src="{{theme === 'dark' ? icons.sun : icons.moon}}" mode="aspectFit"></image>
+        <text>{{theme === 'dark' ? '极简白' : '科技黑'}}</text>
+      </button>
+
+      <button class="footer-button {{currentTab === 'report' ? 'footer-button-active' : ''}}" hover-class="footer-button-hover" hover-stay-time="150" data-tab="report" bindtap="handleSwitchTab">
+        <view wx:if="{{showReportBadge}}" class="report-badge"></view>
+        <image class="icon-44" src="{{icons.bookOpen}}" mode="aspectFit"></image>
+        <text>本场报告</text>
+      </button>
+    </view>
+  </view>
+
+  <view wx:if="{{showResetDialog}}" class="overlay-mask">
+    <view class="overlay-panel">
+      <view class="overlay-icon-wrap">
+        <image class="icon-48" src="{{icons.refreshCw}}" mode="aspectFit"></image>
+      </view>
+      <text class="overlay-title">确定清空账簿并重新开始吗？</text>
+      <text class="overlay-text">这会清除当前 {{recordsCount}} 次强化账簿历史，并将资产计算回滚到初始状态。该操作无法撤销。</text>
+      <button class="overlay-primary" hover-class="action-button-hover" hover-stay-time="120" bindtap="handleConfirmReset">确认清空并重新开始</button>
+      <button class="overlay-secondary" hover-class="ghost-button-hover" hover-stay-time="120" bindtap="handleCloseResetDialog">维持原样</button>
+    </view>
+  </view>
+
+  <view wx:if="{{showStrategyHelp}}" class="overlay-mask strategy-modal-mask" bindtap="handleToggleStrategyHelp">
+    <view class="overlay-panel strategy-modal-panel" catchtap="noop">
+      <view class="strategy-modal-head">
+        <view class="help-title-row strategy-modal-title-row">
+          <image class="icon-20" src="{{icons.helpCircle}}" mode="aspectFit"></image>
+          <text class="strategy-modal-title">合卡怪招@2k哈利(拆卡合卡)</text>
+        </view>
+        <text class="strategy-modal-subtitle">只提供个人思路，方便集中查看，不代表包成逻辑。</text>
+      </view>
+      <scroll-view class="strategy-modal-scroll" scroll-y enhanced show-scrollbar="{{false}}">
+        <view class="strategy-modal-list">
+          <block wx:for="{{strategyTricks}}" wx:key="index">
+            <view class="strategy-modal-item">
+              <text class="strategy-modal-item-index">{{index + 1}}.</text>
+              <text class="strategy-modal-item-text">{{item}}</text>
+            </view>
+          </block>
+        </view>
+      </scroll-view>
+      <button class="overlay-secondary strategy-modal-close" hover-class="ghost-button-hover" hover-stay-time="120" bindtap="handleToggleStrategyHelp">我知道了</button>
+    </view>
+  </view>
+
+  <view wx:if="{{isBreathingModalOpen}}" class="overlay-mask overlay-mask-strong">
+    <view class="breathing-page">
+      <view class="breathing-hero">
+        <view class="breathing-warning-icon">
+          <image class="icon-48" src="{{icons.shieldAlert}}" mode="aspectFit"></image>
+        </view>
+        <text class="breathing-title">【 情绪红色警报 · 强制冷静 】</text>
+        <text class="breathing-text">您的理智值得分极低 ({{sanityMetrics.score}}%)。根据行为经济学，您当前的决策大脑已进入“边缘系统劫持”阶段，请务必暂停一切合卡操作！</text>
+      </view>
+
+      <view class="breathing-showcase">
+        <view class="breathing-core">
+          <view class="breathing-ring" style="transform: scale({{breathingCircleScale * 1.15}}); opacity: {{breathingPhase === 'inhale' ? 0.8 : 0.4}};"></view>
+          <view class="breathing-circle" style="transform: scale({{breathingCircleScale}});"></view>
+          <view class="breathing-icon-stack">
+            <image wx:if="{{breathingPhase === 'inhale'}}" class="icon-56 breathing-icon breathing-icon-emerald" src="{{icons.wind}}" mode="aspectFit"></image>
+            <image wx:elif="{{breathingPhase === 'hold'}}" class="icon-56 breathing-icon breathing-icon-amber" src="{{icons.brainCircuit}}" mode="aspectFit"></image>
+            <image wx:else class="icon-56 breathing-icon breathing-icon-sky" src="{{icons.heart}}" mode="aspectFit"></image>
+          </view>
+        </view>
+        <text class="breathing-cue breathing-cue-{{breathingCueTone}}">{{breathingCueText}}</text>
+      </view>
+
+      <view class="breathing-card">
+        <view class="breathing-card-glow"></view>
+        <view class="breathing-card-badge">
+          <image class="icon-20" src="{{icons.sparkles}}" mode="aspectFit"></image>
+          <text>理智自醒 · 科学辟谣</text>
+        </view>
+        <view class="breathing-card-main">
+          <view class="breathing-card-marker"></view>
+          <text class="breathing-card-main-text">{{breathingCard.title}}</text>
+        </view>
+        <view class="breathing-card-body">
+          <text class="breathing-card-text">{{breathingCard.content}}</text>
+        </view>
+      </view>
+
+      <view class="breathing-action-wrap">
+        <button class="breathing-confirm {{breathingCountdown > 0 ? 'breathing-confirm-disabled' : 'breathing-confirm-active'}}" hover-class="{{breathingCountdown > 0 ? 'none' : 'action-button-hover'}}" hover-stay-time="120" bindtap="handleConfirmBreathing">
+          {{breathingCountdown > 0 ? '请深呼吸冷静中 (' + breathingCountdown + 's)...' : '我已阅读并完全恢复理智'}}
+        </button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 报告图生成canvas已隐藏 -->
+  <!--
+  <canvas class="hidden-canvas" canvas-id="guardianReportCanvas" style="width: {{windowWidth}}px; height: {{reportCanvasHeight}}px;"></canvas>
+  -->
+</view>

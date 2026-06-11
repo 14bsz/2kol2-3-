@@ -1,0 +1,28 @@
+{
+  "description": "NBA2KOL2 合卡理智卫士 - 根目录微信项目映射",
+  "packOptions": {
+    "ignore": []
+  },
+  "setting": {
+    "urlCheck": false,
+    "es6": true,
+    "enhance": true,
+    "postcss": true,
+    "minified": false,
+    "newFeature": true,
+    "coverView": true,
+    "nodeModules": false,
+    "autoAudits": false,
+    "showShadowRootInWxmlPanel": true,
+    "compileHotReLoad": false,
+    "useApiHostProcess": false
+  },
+  "compileType": "miniprogram",
+  "libVersion": "3.7.4",
+  "appid": "wxfb32cece4cd25f8e",
+  "projectname": "nba2kol2-guardian-native-root",
+  "simulatorType": "wechat",
+  "condition": {},
+  "srcMiniprogramRoot": "wechat-miniprogram-native/miniprogram/",
+  "miniprogramRoot": "wechat-miniprogram-native/miniprogram/"
+}

@@ -1,0 +1,15 @@
+{
+  "pages": [
+    "pages/guardianDashboardPage/index"
+  ],
+  "window": {
+    "navigationStyle": "custom",
+    "backgroundTextStyle": "light",
+    "backgroundColor": "#0f172a",
+    "backgroundColorTop": "#0f172a",
+    "backgroundColorBottom": "#0f172a"
+  },
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents",
+  "darkmode": true
+}

@@ -1,0 +1,11 @@
+node_modules/
+build/
+dist/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
+.workbuddy/
+project.private.config.json
+wechat-miniprogram-native/project.private.config.json
