@@ -128,7 +128,13 @@ export default function Consoles({
   const handleStarTabChange = (star: number) => {
     playClickSound();
     setActiveStarTab(star);
-    const matching = UPGRADE_RULES.find((r) => r.targetStar === star);
+    let matching: UpgradeRule | undefined;
+    if (star === 3) {
+      matching = UPGRADE_RULES.find((r) => r.targetStar === star && r.id === '3_2_2s');
+    }
+    if (!matching) {
+      matching = UPGRADE_RULES.find((r) => r.targetStar === star);
+    }
     if (matching) {
       setSelectedRuleId(matching.id);
     }

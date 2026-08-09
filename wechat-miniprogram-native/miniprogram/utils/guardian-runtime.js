@@ -28,6 +28,7 @@ __export(guardian_runtime_exports, {
   getRandomBreathingCardIndex: () => getRandomBreathingCardIndex,
   getTrendCanvasPoints: () => getTrendCanvasPoints,
   loadGuardianPersistentState: () => loadGuardianPersistentState,
+  normalizeRecords: () => normalizeRecords,
   persistGuardianPersistentState: () => persistGuardianPersistentState,
   playTapFeedback: () => playTapFeedback,
   playSuccessFeedback: () => playSuccessFeedback,
@@ -120,6 +121,12 @@ function createRecord(rule, success, sanityScoreBefore) {
     sanityScoreAfter: sanityScoreBefore,
     title
   };
+}
+function compactFormulaName(formulaName) {
+  return String(formulaName || "").replace(/\s+/g, "").replace(/\uFF08/g, "(").replace(/\uFF09/g, ")");
+}
+function formatRuleDisplayText(targetStar, formulaName) {
+  return `${targetStar}\u7A81+${compactFormulaName(formulaName)}`;
 }
 function getMathExpectation(rule) {
   return rule.successRate / 100 * rule.successGain - (1 - rule.successRate / 100) * rule.failLoss;
@@ -339,43 +346,62 @@ function getReportStats(records) {
     currentStreakText
   };
 }
+function normalizeRecords(records, initialCards, drawDownLimitPercent) {
+  const normalized = [];
+  records.forEach((item) => {
+    const sanityScoreBefore = getSanityMetrics(initialCards, normalized, drawDownLimitPercent).score;
+    const nextRecord = {
+      ...item,
+      sanityScoreBefore,
+      sanityScoreAfter: sanityScoreBefore,
+      occurrenceGlobalIndex: normalized.length + 1
+    };
+    const previewRecords = [...normalized, nextRecord];
+    nextRecord.sanityScoreAfter = getSanityMetrics(initialCards, previewRecords, drawDownLimitPercent).score;
+    normalized.push(nextRecord);
+  });
+  return normalized;
+}
 function buildRecordList(records) {
   return records.slice().reverse().map((item) => ({
     ...item,
     timeLabel: formatTime(item.timestamp, true),
     statusText: item.success ? "\u6210\u529F" : "\u5931\u8D25",
     netChangeText: `${item.netChange > 0 ? "+" : ""}${item.netChange}`,
-    sanityText: `${item.sanityScoreAfter}%`
+    sanityText: `${item.sanityScoreAfter}%`,
+    ruleDisplayText: formatRuleDisplayText(item.targetStar, item.formulaName)
   }));
+}
+function buildExclusiveRecordList(records, rate) {
+  const matched = records.filter((item) => item.successRate === rate).map((item) => ({
+    ...item,
+    occurrenceIndex: item.occurrenceGlobalIndex,
+    occurrenceText: `\u7B2C${item.occurrenceGlobalIndex}\u6B21`
+  }));
+  return buildRecordList(matched);
 }
 function buildGridSlots(records) {
   const reversed = records.slice().reverse();
-  const result = [];
-  for (let index = 0; index < 32; index += 1) {
-    const item = reversed[index];
-    if (item) {
-      result.push({
-        id: item.id,
-        isFilled: true,
-        success: item.success,
-        symbol: item.success ? "\u2713" : "\u2717",
-        targetStarLabel: `${item.targetStar}`,
-        detailTitle: `${item.success ? "\u6210\u529F" : "\u5931\u8D25"} \xB7 ${item.targetStar}\u7A81 (${item.formulaName})`,
-        detailText: `${formatTime(item.timestamp, true)} \xB7 \u5B98\u65B9\u51E0\u7387 ${item.successRate}% \xB7 ${item.netChange > 0 ? `\u8D5A +${item.netChange}` : `\u4E8F ${item.netChange}`} \u5F20`
-      });
-    } else {
-      result.push({
-        id: `placeholder_${index}`,
-        isFilled: false,
-        success: false,
-        symbol: "\u2022",
-        targetStarLabel: "",
-        detailTitle: "",
-        detailText: ""
-      });
-    }
+  if (!reversed.length) {
+    return [{
+      id: "placeholder_empty",
+      isFilled: false,
+      success: false,
+      symbol: "\u2022",
+      targetStarLabel: "",
+      detailTitle: "",
+      detailText: ""
+    }];
   }
-  return result;
+  return reversed.map((item) => ({
+    id: item.id,
+    isFilled: true,
+    success: item.success,
+    symbol: item.success ? "\u2713" : "\u2717",
+    targetStarLabel: `${item.targetStar}`,
+    detailTitle: `${item.success ? "\u6210\u529F" : "\u5931\u8D25"} \xB7 ${formatRuleDisplayText(item.targetStar, item.formulaName)}`,
+    detailText: `${formatTime(item.timestamp, true)} \xB7 \u5B98\u65B9\u51E0\u7387 ${item.successRate}% \xB7 ${item.netChange > 0 ? `\u8D5A +${item.netChange}` : `\u4E8F ${item.netChange}`} \u5F20`
+  }));
 }
 function buildWealthTrend(initialCards, records) {
   const trend = [initialCards];
@@ -552,18 +578,23 @@ function getBreathingVisual(uiState) {
 function buildDashboardView(persistentState, uiState) {
   const selectedRule = findRuleById(persistentState.selectedRuleId);
   const currentRules = import_guardian_data.UPGRADE_RULES.filter((item) => item.targetStar === uiState.activeStarTab);
-  const currentCards = getCurrentCards(persistentState.initialCards, persistentState.records);
-  const drawdownStats = getDrawdownStats(persistentState.initialCards, persistentState.records);
-  const sanityMetrics = getSanityMetrics(
-    persistentState.initialCards,
+  const normalizedRecords = normalizeRecords(
     persistentState.records,
+    persistentState.initialCards,
     persistentState.drawDownLimitPercent
   );
-  const reportStats = getReportStats(persistentState.records);
+  const currentCards = getCurrentCards(persistentState.initialCards, normalizedRecords);
+  const drawdownStats = getDrawdownStats(persistentState.initialCards, normalizedRecords);
+  const sanityMetrics = getSanityMetrics(
+    persistentState.initialCards,
+    normalizedRecords,
+    persistentState.drawDownLimitPercent
+  );
+  const reportStats = getReportStats(normalizedRecords);
   const mathExpectation = getMathExpectation(selectedRule);
   const expectationDescriptor = getExpectationDescriptor(selectedRule, currentRules);
   const breathingVisual = getBreathingVisual(uiState);
-  const wealthTrend = buildWealthTrend(persistentState.initialCards, persistentState.records);
+  const wealthTrend = buildWealthTrend(persistentState.initialCards, normalizedRecords);
   return {
     selectedRule,
     currentRules,
@@ -576,14 +607,14 @@ function buildDashboardView(persistentState, uiState) {
     expectationBadgeText: expectationDescriptor.expectationBadgeText,
     expectationHintText: expectationDescriptor.expectationHintText,
     expectationValueText: expectationDescriptor.expectationValueText,
-    recordsCount: persistentState.records.length,
-    records24: buildRecordList(persistentState.records.filter((item) => item.successRate === 24)),
-    records48: buildRecordList(persistentState.records.filter((item) => item.successRate === 48)),
-    exclusive24: getExclusiveSummary(persistentState.records, 24),
-    exclusive48: getExclusiveSummary(persistentState.records, 48),
-    gridSlots: buildGridSlots(persistentState.records),
+    recordsCount: normalizedRecords.length,
+    records24: buildExclusiveRecordList(normalizedRecords, 24),
+    records48: buildExclusiveRecordList(normalizedRecords, 48),
+    exclusive24: getExclusiveSummary(normalizedRecords, 24),
+    exclusive48: getExclusiveSummary(normalizedRecords, 48),
+    gridSlots: buildGridSlots(normalizedRecords),
     reportStats,
-    recordList: buildRecordList(persistentState.records),
+    recordList: buildRecordList(normalizedRecords),
     sanityMetrics,
     cognitiveDiagnosis: getCognitiveDiagnosis(reportStats, sanityMetrics, persistentState.drawDownLimitPercent),
     icons: buildThemeIcons(persistentState.theme),

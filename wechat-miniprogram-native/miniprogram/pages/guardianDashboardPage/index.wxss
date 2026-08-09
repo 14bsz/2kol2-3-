@@ -151,9 +151,58 @@
 
 .sound-button {
   min-height: 68rpx;
-  padding: 0 20rpx;
+  height: 68rpx;
+  padding: 0 12rpx;
   border-radius: 18rpx;
   gap: 6rpx;
+  margin-right: 12rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sound-button .icon-24 {
+  flex-shrink: 0;
+}
+
+.header-action-btn {
+  min-height: 68rpx;
+  height: 68rpx;
+  padding: 0 8rpx;
+  border-radius: 18rpx;
+  gap: 2rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.header-action-btn-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2rpx;
+}
+
+.header-action-btn .icon-24 {
+  flex-shrink: 0;
+}
+
+.header-action-btn-icon {
+  width: 28rpx;
+  height: 28rpx;
+}
+
+.header-action-btn-text {
+  color: #10b981;
+  font-size: 16rpx;
+  font-weight: 800;
+  line-height: 1;
+  display: inline-block;
+}
+
+.theme-dark .header-action-btn-text {
+  color: #10b981;
 }
 
 .strategy-help-button {
@@ -1006,6 +1055,13 @@
   gap: 4rpx;
 }
 
+.history-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  flex-wrap: wrap;
+}
+
 .history-side {
   gap: 10rpx;
 }
@@ -1038,6 +1094,20 @@
 .history-status-fail {
   color: #dc2626;
   background: rgba(239, 68, 68, 0.12);
+}
+
+.history-occurrence {
+  padding: 4rpx 10rpx;
+  border-radius: 999rpx;
+  font-size: 16rpx;
+  font-weight: 800;
+  color: #4f46e5;
+  background: rgba(99, 102, 241, 0.12);
+}
+
+.theme-dark .history-occurrence {
+  color: #a5b4fc;
+  background: rgba(79, 70, 229, 0.22);
 }
 
 .history-delta,
@@ -1662,6 +1732,177 @@
   background: #020617;
 }
 
+.record-editor-panel {
+  max-width: 680rpx;
+  padding: 40rpx 32rpx 32rpx;
+  align-items: stretch;
+  text-align: center;
+}
+
+.record-editor-head,
+.record-editor-section,
+.record-editor-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+}
+
+.record-editor-head {
+  align-items: center;
+  padding-bottom: 12rpx;
+  border-bottom: 1rpx solid rgba(229, 231, 235, 0.9);
+}
+
+.theme-dark .record-editor-head {
+  border-bottom-color: rgba(30, 41, 59, 0.95);
+}
+
+.record-editor-title {
+  font-size: 30rpx;
+  font-weight: 800;
+  line-height: 1.5;
+  color: #111827;
+}
+
+.theme-dark .record-editor-title {
+  color: #f4f4f5;
+}
+
+.record-editor-subtitle,
+.record-editor-label,
+.record-editor-preview-title,
+.record-editor-preview-text {
+  font-size: 22rpx;
+  line-height: 1.6;
+}
+
+.record-editor-subtitle,
+.record-editor-label,
+.record-editor-preview-title {
+  color: #6b7280;
+}
+
+.theme-dark .record-editor-subtitle,
+.theme-dark .record-editor-label,
+.theme-dark .record-editor-preview-title {
+  color: #a1a1aa;
+}
+
+.record-editor-star-tabs,
+.record-editor-outcome-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12rpx;
+  width: 100%;
+}
+
+.record-editor-star-tab,
+.record-editor-outcome {
+  min-height: 72rpx;
+  border-radius: 18rpx;
+  border: 1rpx solid rgba(209, 213, 219, 1);
+  background: #f9fafb;
+  color: #4b5563;
+  font-size: 24rpx;
+  font-weight: 800;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.theme-dark .record-editor-star-tab,
+.theme-dark .record-editor-outcome {
+  border-color: rgba(30, 41, 59, 0.95);
+  background: rgba(15, 23, 42, 0.92);
+  color: #d4d4d8;
+}
+
+.record-editor-star-tab-active {
+  color: #ffffff;
+  border-color: transparent;
+  background: linear-gradient(135deg, #059669, #10b981);
+}
+
+.record-editor-picker {
+  min-height: 80rpx;
+  padding: 0 20rpx;
+  border-radius: 20rpx;
+  border: 1rpx solid rgba(229, 231, 235, 1);
+  background: #f9fafb;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  text-align: center;
+}
+
+.theme-dark .record-editor-picker {
+  border-color: rgba(30, 41, 59, 0.95);
+  background: rgba(15, 23, 42, 0.92);
+}
+
+.record-editor-picker-text {
+  flex: 1;
+  min-width: 0;
+  font-size: 24rpx;
+  font-weight: 700;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.record-editor-outcome-active-success {
+  color: #047857;
+  border-color: rgba(16, 185, 129, 0.28);
+  background: rgba(16, 185, 129, 0.12);
+}
+
+.record-editor-outcome-active-fail {
+  color: #dc2626;
+  border-color: rgba(239, 68, 68, 0.28);
+  background: rgba(239, 68, 68, 0.12);
+}
+
+.theme-dark .record-editor-outcome-active-success {
+  color: #34d399;
+  background: rgba(6, 78, 59, 0.32);
+  border-color: rgba(6, 95, 70, 0.7);
+}
+
+.theme-dark .record-editor-outcome-active-fail {
+  color: #f87171;
+  background: rgba(127, 29, 29, 0.28);
+  border-color: rgba(127, 29, 29, 0.7);
+}
+
+.record-editor-preview {
+  padding: 20rpx;
+  border-radius: 20rpx;
+  border: 1rpx solid rgba(229, 231, 235, 1);
+  background: #f9fafb;
+  align-items: center;
+}
+
+.theme-dark .record-editor-preview {
+  border-color: rgba(30, 41, 59, 0.95);
+  background: rgba(15, 23, 42, 0.92);
+}
+
+.record-editor-preview-text {
+  color: #111827;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  text-align: center;
+}
+
+.theme-dark .record-editor-preview-text {
+  color: #f4f4f5;
+}
+
+.record-editor-save {
+  margin-top: 4rpx;
+  background: linear-gradient(135deg, #059669, #10b981) !important;
+}
+
 .overlay-icon-wrap,
 .breathing-warning-icon {
   width: 96rpx;
@@ -2225,7 +2466,108 @@
 
 .theme-dark .report-streak-mini {
   background: rgba(2, 6, 23, 0.92);
-  border: 1rpx solid rgba(30, 41, 59, 0.92);
+}
+
+/* 群二维码弹窗样式 */
+.qr-code-mask {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.qr-code-panel {
+  max-width: 600rpx;
+  padding: 40rpx 32rpx 32rpx;
+  border-radius: 32rpx;
+}
+
+.qr-code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 24rpx;
+}
+
+.qr-code-title {
+  font-size: 36rpx;
+  font-weight: 800;
+  color: #111827;
+  line-height: 1.4;
+}
+
+.theme-dark .qr-code-title {
+  color: #f4f4f5;
+}
+
+.qr-code-close-btn {
+  width: 56rpx;
+  height: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999rpx;
+  background: rgba(148, 163, 184, 0.12);
+}
+
+.theme-dark .qr-code-close-btn {
+  background: rgba(51, 65, 85, 0.8);
+}
+
+.qr-code-close-icon {
+  font-size: 40rpx;
+  font-weight: 300;
+  color: #6b7280;
+  line-height: 1;
+}
+
+.theme-dark .qr-code-close-icon {
+  color: #9ca3af;
+}
+
+.qr-code-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20rpx;
+  width: 100%;
+}
+
+.qr-code-desc {
+  font-size: 26rpx;
+  color: #6b7280;
+  line-height: 1.6;
+  text-align: center;
+  margin-bottom: 8rpx;
+}
+
+.theme-dark .qr-code-desc {
+  color: #a1a1aa;
+}
+
+.qr-code-image {
+  width: 400rpx;
+  height: 400rpx;
+  border-radius: 24rpx;
+  border: 4rpx solid rgba(229, 231, 235, 0.9);
+}
+
+.theme-dark .qr-code-image {
+  border-color: rgba(30, 41, 59, 0.95);
+}
+
+.qr-code-tip {
+  font-size: 22rpx;
+  color: #9ca3af;
+  text-align: center;
+  margin-top: 8rpx;
+}
+
+.theme-dark .qr-code-tip {
+  color: #71717a;
+}
+
+.qr-code-confirm-btn {
+  margin-top: 24rpx;
+  background: linear-gradient(135deg, #059669, #10b981) !important;
 }
 
 .report-streak-mini-label {
@@ -2647,6 +2989,7 @@
 .report-ledger-title-row {
   gap: 8rpx;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .report-ledger-title {
@@ -2654,9 +2997,8 @@
   min-width: 0;
   font-size: 28rpx;
   font-weight: 800;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  word-break: break-word;
   line-height: 1.4;
 }
 
@@ -2669,10 +3011,26 @@
   line-height: 1.4;
 }
 
+.report-ledger-formula {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6rpx 12rpx;
+  border-radius: 999rpx;
+  text-align: center;
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
+}
+
 .theme-dark .report-ledger-formula,
 .theme-dark .report-ledger-time,
 .theme-dark .report-ledger-score {
   color: #71717a;
+}
+
+.theme-dark .report-ledger-formula {
+  color: #34d399;
+  background: rgba(6, 78, 59, 0.3);
 }
 
 .report-ledger-side {

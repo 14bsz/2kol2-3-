@@ -12,8 +12,24 @@ const EMPTY_SANITY = {
   maxDrawdown: 0,
   maxDrawdownPercent: 0
 };
+function compactFormulaName(formulaName) {
+  return String(formulaName || "").replace(/\s+/g, "").replace(/\uFF08/g, "(").replace(/\uFF09/g, ")");
+}
+function formatRuleDisplayText(targetStar, formulaName) {
+  return `${targetStar}\u7A81+${compactFormulaName(formulaName)}`;
+}
+function buildRuleOptions(targetStar) {
+  return import_guardian_data.UPGRADE_RULES.filter((item) => item.targetStar === targetStar).map((item) => ({
+    ...item,
+    displayText: formatRuleDisplayText(item.targetStar, item.formulaName)
+  }));
+}
+function buildRecordTitle(rule, success) {
+  return `${rule.targetStar} \u7A81\u5F3A\u5316 \xB7 ${success ? "\u5347\u661F\u6210\u529F!" : "\u5F3A\u5316\u5931\u8D25... \u7206"}`;
+}
 Page({
   data: {
+    showQrCodeModal: false,
     statusBarHeight: 0,
     menuButtonHeight: 0,
     headerPaddingTop: 0,
@@ -114,9 +130,25 @@ Page({
     wealthTrend: [import_guardian_data.DEFAULT_INITIAL_CARDS],
     wealthMin: import_guardian_data.DEFAULT_INITIAL_CARDS,
     wealthMax: import_guardian_data.DEFAULT_INITIAL_CARDS,
-    wealthIsUp: true
+    wealthIsUp: true,
+    showRecordEditor: false,
+    editingRecordId: "",
+    editRecordTargetStar: (0, import_guardian_runtime.findRuleById)(import_guardian_data.DEFAULT_SELECTED_RULE_ID).targetStar,
+    editRecordRuleOptions: [],
+    editRecordRuleIndex: 0,
+    editRecordSuccess: true,
+    editRecordTimeLabel: "",
+    editRecordRuleLabel: "",
+    editRecordRatePreview: "--",
+    editRecordNetPreview: "0\u5F20"
   },
   onLoad() {
+    // 检查是否需要显示群二维码弹窗
+    const hasShownQrCode = wx.getStorageSync('hasShownQrCode');
+    if (!hasShownQrCode) {
+      this.setData({ showQrCodeModal: true });
+    }
+
     const systemInfo = wx.getSystemInfoSync();
     const menuButton = wx.getMenuButtonBoundingClientRect();
 
@@ -296,12 +328,106 @@ Page({
     if (!event.currentTarget.dataset.filled) {
       return;
     }
-    wx.showModal({
-      title: String(event.currentTarget.dataset.title || "\u8BB0\u5F55\u8BE6\u60C5"),
-      content: String(event.currentTarget.dataset.detail || ""),
-      showCancel: false,
-      confirmText: "\u77E5\u9053\u4E86"
+    const recordId = String(event.currentTarget.dataset.id || "");
+    const record = this._persistentState.records.find((item) => item.id === recordId);
+    if (!record) {
+      return;
+    }
+    const editRecordRuleOptions = buildRuleOptions(record.targetStar);
+    const editRecordRuleIndex = Math.max(0, editRecordRuleOptions.findIndex((item) => item.id === record.ruleId));
+    const currentRule = editRecordRuleOptions[editRecordRuleIndex] || editRecordRuleOptions[0];
+    (0, import_guardian_runtime.playTapFeedback)(this._persistentState.soundEnabled, "light");
+    this.setData({
+      showRecordEditor: true,
+      editingRecordId: record.id,
+      editRecordTargetStar: record.targetStar,
+      editRecordRuleOptions,
+      editRecordRuleIndex,
+      editRecordSuccess: record.success,
+      editRecordTimeLabel: (0, import_guardian_runtime.formatTime)(record.timestamp, true),
+      editRecordRuleLabel: currentRule ? currentRule.displayText : formatRuleDisplayText(record.targetStar, record.formulaName),
+      editRecordRatePreview: `${record.successRate}%`,
+      editRecordNetPreview: `${record.netChange > 0 ? "+" : ""}${record.netChange}\u5F20`
     });
+  },
+  handleCloseRecordEditor() {
+    this.setData({
+      showRecordEditor: false,
+      editingRecordId: "",
+      editRecordRuleOptions: [],
+      editRecordRuleIndex: 0
+    });
+  },
+  handleRecordEditorStarChange(event) {
+    const targetStar = Number(event.currentTarget.dataset.star || this.data.editRecordTargetStar);
+    const editRecordRuleOptions = buildRuleOptions(targetStar);
+    const currentRule = editRecordRuleOptions[0];
+    if (!currentRule) {
+      return;
+    }
+    this.setData({
+      editRecordTargetStar: targetStar,
+      editRecordRuleOptions,
+      editRecordRuleIndex: 0,
+      editRecordRuleLabel: currentRule.displayText,
+      editRecordRatePreview: `${currentRule.successRate}%`,
+      editRecordNetPreview: `${this.data.editRecordSuccess ? `+${currentRule.successGain}` : `-${currentRule.failLoss}`}\u5F20`
+    });
+  },
+  handleRecordEditorRuleChange(event) {
+    const editRecordRuleIndex = Number(event.detail.value || 0);
+    const currentRule = this.data.editRecordRuleOptions[editRecordRuleIndex];
+    if (!currentRule) {
+      return;
+    }
+    this.setData({
+      editRecordRuleIndex,
+      editRecordRuleLabel: currentRule.displayText,
+      editRecordRatePreview: `${currentRule.successRate}%`,
+      editRecordNetPreview: `${this.data.editRecordSuccess ? `+${currentRule.successGain}` : `-${currentRule.failLoss}`}\u5F20`
+    });
+  },
+  handleRecordEditorOutcomeChange(event) {
+    const success = String(event.currentTarget.dataset.success) === "true";
+    const currentRule = this.data.editRecordRuleOptions[this.data.editRecordRuleIndex];
+    this.setData({
+      editRecordSuccess: success,
+      editRecordNetPreview: currentRule ? `${success ? `+${currentRule.successGain}` : `-${currentRule.failLoss}`}\u5F20` : this.data.editRecordNetPreview
+    });
+  },
+  handleConfirmRecordEdit() {
+    const editingRecordId = this.data.editingRecordId;
+    const currentRule = this.data.editRecordRuleOptions[this.data.editRecordRuleIndex];
+    if (!editingRecordId || !currentRule) {
+      return;
+    }
+    // 1. 修改记录的核心字段
+    let nextRecords = this._persistentState.records.map((item) => {
+      if (item.id !== editingRecordId) {
+        return item;
+      }
+      return {
+        ...item,
+        ruleId: currentRule.id,
+        formulaName: currentRule.formulaName,
+        targetStar: currentRule.targetStar,
+        successRate: currentRule.successRate,
+        success: this.data.editRecordSuccess,
+        failLoss: currentRule.failLoss,
+        successGain: currentRule.successGain,
+        netChange: this.data.editRecordSuccess ? currentRule.successGain : -currentRule.failLoss,
+        title: buildRecordTitle(currentRule, this.data.editRecordSuccess)
+      };
+    });
+
+    // 2. 重新标准化整个 records，包括重新计算 occurrenceGlobalIndex、sanityScoreBefore/After
+    nextRecords = (0, import_guardian_runtime.normalizeRecords)(nextRecords, this._persistentState.initialCards, this._persistentState.drawDownLimitPercent);
+
+    // 3. 保存并刷新
+    this._persistentState.records = nextRecords;
+    (0, import_guardian_runtime.playTapFeedback)(this._persistentState.soundEnabled, "medium");
+    this.setData({ showRecordEditor: false, reportGenerated: false });
+    this.syncView();
   },
   handleOpenResetDialog() {
     (0, import_guardian_runtime.playTapFeedback)(this._persistentState.soundEnabled, "light");
@@ -734,5 +860,16 @@ Page({
     this.setData({ reportCanvasHeight: cssHeight }, () => {
       setTimeout(() => this.drawReportCanvas(), 120);
     });
+  },
+  
+  // 关闭二维码弹窗
+  handleCloseQrCodeModal() {
+    this.setData({ showQrCodeModal: false });
+    wx.setStorageSync('hasShownQrCode', true);
+  },
+  
+  // 重新打开二维码弹窗（供未来在设置中使用）
+  handleOpenQrCodeModal() {
+    this.setData({ showQrCodeModal: true });
   }
 });

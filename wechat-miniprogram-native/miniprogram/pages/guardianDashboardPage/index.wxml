@@ -14,6 +14,12 @@
           <image class="icon-24" src="{{soundEnabled ? icons.volume2 : icons.volumeX}}" mode="aspectFit"></image>
           <text class="sound-button-text {{soundEnabled ? 'sound-button-text-active' : ''}}">{{soundEnabled ? '音效开' : '静音中'}}</text>
           </button>
+          <button class="header-action-btn" hover-class="ghost-button-hover" hover-stay-time="120" bindtap="handleOpenQrCodeModal">
+            <view class="header-action-btn-content">
+              <image class="icon-24 header-action-btn-icon" src="{{icons.helpCircle}}" mode="aspectFit"></image>
+              <text class="header-action-btn-text">群聊</text>
+            </view>
+          </button>
         </view>
       </view>
     </view>
@@ -211,8 +217,11 @@
                       <block wx:for="{{records24}}" wx:key="id">
                         <view class="history-row">
                           <view class="history-main">
-                            <text class="history-main-title">{{item.targetStar}}突 ({{item.formulaName}})</text>
-                            <text class="history-time">{{item.timeLabel}}</text>
+                            <text class="history-main-title">{{item.ruleDisplayText}}</text>
+                            <view class="history-meta-row">
+                              <text class="history-time">{{item.timeLabel}}</text>
+                              <text class="history-occurrence">{{item.occurrenceText}}</text>
+                            </view>
                           </view>
                           <view class="history-side">
                             <text class="history-status {{item.success ? 'history-status-success' : 'history-status-fail'}}">{{item.statusText}}</text>
@@ -232,8 +241,11 @@
                       <block wx:for="{{records48}}" wx:key="id">
                         <view class="history-row">
                           <view class="history-main">
-                            <text class="history-main-title">{{item.targetStar}}突 ({{item.formulaName}})</text>
-                            <text class="history-time">{{item.timeLabel}}</text>
+                            <text class="history-main-title">{{item.ruleDisplayText}}</text>
+                            <view class="history-meta-row">
+                              <text class="history-time">{{item.timeLabel}}</text>
+                              <text class="history-occurrence">{{item.occurrenceText}}</text>
+                            </view>
                           </view>
                           <view class="history-side">
                             <text class="history-status {{item.success ? 'history-status-success' : 'history-status-fail'}}">{{item.statusText}}</text>
@@ -273,6 +285,7 @@
                         class="trend-slot {{item.isFilled ? (item.success ? 'trend-slot-success' : 'trend-slot-empty') : 'trend-slot-placeholder'}}"
                         hover-class="trend-slot-hover"
                         hover-stay-time="100"
+                        data-id="{{item.id}}"
                         data-title="{{item.detailTitle}}"
                         data-detail="{{item.detailText}}"
                         data-filled="{{item.isFilled}}"
@@ -288,6 +301,7 @@
                         class="trend-slot {{item.isFilled ? (!item.success ? 'trend-slot-fail' : 'trend-slot-empty') : 'trend-slot-placeholder'}}"
                         hover-class="trend-slot-hover"
                         hover-stay-time="100"
+                        data-id="{{item.id}}"
                         data-title="{{item.detailTitle}}"
                         data-detail="{{item.detailText}}"
                         data-filled="{{item.isFilled}}"
@@ -492,8 +506,8 @@
                     <view class="ledger-stripe {{item.success ? 'ledger-stripe-green' : 'ledger-stripe-red'}}"></view>
                     <view class="report-ledger-main">
                       <view class="report-ledger-title-row">
-                        <text class="report-ledger-title">{{item.title}}</text>
-                        <text class="report-ledger-formula">{{item.formulaName}}</text>
+                        <text class="report-ledger-title">{{item.statusText}} · {{item.ruleDisplayText}}</text>
+                        <text class="report-ledger-formula">{{item.ruleDisplayText}}</text>
                       </view>
                       <text class="report-ledger-time">{{item.timeLabel}} · 官方几率 {{item.successRate}}%</text>
                     </view>
@@ -543,6 +557,75 @@
       <text class="overlay-text">这会清除当前 {{recordsCount}} 次强化账簿历史，并将资产计算回滚到初始状态。该操作无法撤销。</text>
       <button class="overlay-primary" hover-class="action-button-hover" hover-stay-time="120" bindtap="handleConfirmReset">确认清空并重新开始</button>
       <button class="overlay-secondary" hover-class="ghost-button-hover" hover-stay-time="120" bindtap="handleCloseResetDialog">维持原样</button>
+    </view>
+  </view>
+
+  <view wx:if="{{showRecordEditor}}" class="overlay-mask" bindtap="handleCloseRecordEditor">
+    <view class="overlay-panel record-editor-panel" catchtap="noop">
+      <view class="record-editor-head">
+        <text class="record-editor-title">{{editRecordSuccess ? '成功' : '失败'}} · {{editRecordRuleLabel}}</text>
+        <text class="record-editor-subtitle">{{editRecordTimeLabel}} · 官方几率 {{editRecordRatePreview}} · {{editRecordSuccess ? '赚 ' : '亏 '}}{{editRecordNetPreview}}</text>
+      </view>
+
+      <view class="record-editor-section">
+        <text class="record-editor-label">修改目标挡位</text>
+        <view class="record-editor-star-tabs">
+          <block wx:for="{{starOptions}}" wx:key="value">
+            <button
+              class="record-editor-star-tab {{editRecordTargetStar === item ? 'record-editor-star-tab-active' : ''}}"
+              hover-class="star-tab-hover"
+              hover-stay-time="120"
+              data-star="{{item}}"
+              bindtap="handleRecordEditorStarChange"
+            >
+              {{item}}突
+            </button>
+          </block>
+        </view>
+      </view>
+
+      <view class="record-editor-section">
+        <text class="record-editor-label">修改配方</text>
+        <picker mode="selector" range="{{editRecordRuleOptions}}" range-key="displayText" value="{{editRecordRuleIndex}}" bindchange="handleRecordEditorRuleChange">
+          <view class="record-editor-picker">
+            <text class="record-editor-picker-text">{{editRecordRuleLabel}}</text>
+            <image class="icon-22" src="{{icons.arrowRightLeft}}" mode="aspectFit"></image>
+          </view>
+        </picker>
+      </view>
+
+      <view class="record-editor-section">
+        <text class="record-editor-label">修改结果</text>
+        <view class="record-editor-outcome-row">
+          <button
+            class="record-editor-outcome {{editRecordSuccess ? 'record-editor-outcome-active-success' : ''}}"
+            hover-class="ghost-button-hover"
+            hover-stay-time="120"
+            data-success="true"
+            bindtap="handleRecordEditorOutcomeChange"
+          >
+            成功
+          </button>
+          <button
+            class="record-editor-outcome {{!editRecordSuccess ? 'record-editor-outcome-active-fail' : ''}}"
+            hover-class="ghost-button-hover"
+            hover-stay-time="120"
+            data-success="false"
+            bindtap="handleRecordEditorOutcomeChange"
+          >
+            失败
+          </button>
+        </view>
+      </view>
+
+      <view class="record-editor-preview">
+        <text class="record-editor-preview-title">修改后预览</text>
+        <text class="record-editor-preview-text">{{editRecordSuccess ? '成功' : '失败'}} · {{editRecordRuleLabel}}</text>
+        <text class="record-editor-preview-text">{{editRecordTimeLabel}} · 官方几率 {{editRecordRatePreview}} · {{editRecordSuccess ? '赚 ' : '亏 '}}{{editRecordNetPreview}}</text>
+      </view>
+
+      <button class="overlay-primary record-editor-save" hover-class="action-button-hover" hover-stay-time="120" bindtap="handleConfirmRecordEdit">保存这条记录</button>
+      <button class="overlay-secondary" hover-class="ghost-button-hover" hover-stay-time="120" bindtap="handleCloseRecordEditor">取消修改</button>
     </view>
   </view>
 
@@ -619,4 +702,23 @@
   <!--
   <canvas class="hidden-canvas" canvas-id="guardianReportCanvas" style="width: {{windowWidth}}px; height: {{reportCanvasHeight}}px;"></canvas>
   -->
+  
+  <!-- 群二维码弹窗 -->
+  <view wx:if="{{showQrCodeModal}}" class="overlay-mask qr-code-mask" bindtap="handleCloseQrCodeModal">
+    <view class="overlay-panel qr-code-panel" catchtap="noop">
+      <view class="qr-code-header">
+        <text class="qr-code-title">加入交流群</text>
+        <view class="qr-code-close-btn" bindtap="handleCloseQrCodeModal">
+          <text class="qr-code-close-icon">×</text>
+        </view>
+      </view>
+      <view class="qr-code-content">
+        <text class="qr-code-desc">欢迎加入我们的玩家交流群，一起分享合卡心得，获取更多合卡技巧！</text>
+        <!-- 群二维码图片 - 支持 png、jpg、jpeg 格式 -->
+        <image class="qr-code-image" src="../../images/group-qrcode.jpg" mode="aspectFit" show-menu-by-longpress="true"></image>
+        <text class="qr-code-tip">长按识别二维码加入群聊</text>
+      </view>
+      <button class="overlay-primary qr-code-confirm-btn" hover-class="action-button-hover" hover-stay-time="120" bindtap="handleCloseQrCodeModal">我知道了</button>
+    </view>
+  </view>
 </view>
