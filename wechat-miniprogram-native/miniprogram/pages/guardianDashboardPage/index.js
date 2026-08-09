@@ -143,6 +143,8 @@ Page({
     editRecordNetPreview: "0\u5F20"
   },
   onLoad() {
+    // 新版本发布：清除旧的「已显示过群聊通知」标记，让群二维码弹窗重新推送一次
+    wx.removeStorageSync('hasShownQrCode');
     // 检查是否需要显示群二维码弹窗
     const hasShownQrCode = wx.getStorageSync('hasShownQrCode');
     if (!hasShownQrCode) {
