@@ -1,6 +1,11 @@
 "use strict";
 var import_guardian_data = require("../../utils/guardian-data");
 var import_guardian_runtime = require("../../utils/guardian-runtime");
+// ===== 群二维码通知配置 =====
+// 更新群二维码后，把 QR_CODE_NOTICE_VERSION 改成一个新值（建议用发布日期），
+// 即可让所有设备重新收到一次群通知弹窗；每台设备点一次「我知道了」后不再弹出。
+const QR_CODE_NOTICE_VERSION = "2026-09-23";
+const QR_CODE_NOTICE_VERSION_KEY = "nba2k_qr_notice_version_v1";
 const EMPTY_SANITY = {
   score: 100,
   status: "excellent",
@@ -143,11 +148,10 @@ Page({
     editRecordNetPreview: "0\u5F20"
   },
   onLoad() {
-    // 新版本发布：清除旧的「已显示过群聊通知」标记，让群二维码弹窗重新推送一次
-    wx.removeStorageSync('hasShownQrCode');
-    // 检查是否需要显示群二维码弹窗
-    const hasShownQrCode = wx.getStorageSync('hasShownQrCode');
-    if (!hasShownQrCode) {
+    // 群二维码通知：仅当本设备还没确认过「当前版本」时才自动弹出一次
+    // 注意：这里不能清 storage，否则每次进页面都会重复弹出
+    const confirmedQrNoticeVersion = wx.getStorageSync(QR_CODE_NOTICE_VERSION_KEY);
+    if (confirmedQrNoticeVersion !== QR_CODE_NOTICE_VERSION) {
       this.setData({ showQrCodeModal: true });
     }
 
@@ -867,7 +871,8 @@ Page({
   // 关闭二维码弹窗
   handleCloseQrCodeModal() {
     this.setData({ showQrCodeModal: false });
-    wx.setStorageSync('hasShownQrCode', true);
+    // 记住本设备已确认「当前版本」的群通知，之后不再自动弹出
+    wx.setStorageSync(QR_CODE_NOTICE_VERSION_KEY, QR_CODE_NOTICE_VERSION);
   },
   
   // 重新打开二维码弹窗（供未来在设置中使用）
